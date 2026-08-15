@@ -1,0 +1,48 @@
+{
+  "name": "cendekia-amanah-backend",
+  "version": "1.0.0",
+  "description": "Backend REST API & Database for Pesantren Cendekia Amanah",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "admin:create": "tsx src/scripts/create-admin.ts"
+  },
+  "keywords": [
+    "cendekia-amanah",
+    "fastify",
+    "prisma",
+    "postgresql",
+    "typescript"
+  ],
+  "author": "Pesantren Cendekia Amanah",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cookie": "^10.0.1",
+    "@fastify/cors": "^10.0.1",
+    "@fastify/helmet": "^12.0.1",
+    "@fastify/multipart": "^9.0.1",
+    "@fastify/rate-limit": "^10.1.1",
+    "@fastify/static": "^10.1.3",
+    "@fastify/swagger": "^9.4.0",
+    "@fastify/swagger-ui": "^5.2.0",
+    "@prisma/client": "^6.4.1",
+    "argon2": "^0.41.1",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "prisma": "^6.4.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
