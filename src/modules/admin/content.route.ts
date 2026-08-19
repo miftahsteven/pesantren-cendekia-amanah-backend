@@ -513,7 +513,10 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
         year: body.year,
         badge: body.badge,
         imageUrl: body.imageUrl,
-        isFeatured: Boolean(body.isFeatured)
+        isFeatured: body.isFeatured !== undefined ? Boolean(body.isFeatured) : undefined,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : undefined,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+        unitId: body.unitId !== undefined ? (body.unitId || null) : undefined
       }
     });
     return { success: true, message: 'Prestasi berhasil diperbarui.', data: ach };

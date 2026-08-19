@@ -51,7 +51,7 @@ async function main() {
   }
 
   // Seed default Super Admin user
-  const adminPasswordHash = await argon2.hash('AmanahAdmin2026!', {
+  const adminPasswordHash = await argon2.hash('B47054ii!', {
     type: argon2.argon2id,
     memoryCost: 65536,
     timeCost: 3,
@@ -61,13 +61,19 @@ async function main() {
   const superRole = await prisma.role.findUnique({ where: { code: 'SUPER_ADMIN' } });
   const adminUser = await prisma.adminUser.upsert({
     where: { email: 'admin@cendekiaamanah.sch.id' },
-    update: { passwordHash: adminPasswordHash, status: AdminStatus.ACTIVE },
+    update: {
+      username: 'admin',
+      passwordHash: adminPasswordHash,
+      status: AdminStatus.ACTIVE,
+      failedLoginCount: 0
+    },
     create: {
       name: 'Administrator Cendekia Amanah',
       email: 'admin@cendekiaamanah.sch.id',
-      username: 'superadmin',
+      username: 'admin',
       passwordHash: adminPasswordHash,
-      status: AdminStatus.ACTIVE
+      status: AdminStatus.ACTIVE,
+      failedLoginCount: 0
     }
   });
 
@@ -1041,17 +1047,38 @@ async function main() {
   }
 
   // ----------------------------------------------------
-  // 9. ACHIEVEMENTS (ALL 7 items exact from achievements.ts)
+  // 9. ACHIEVEMENTS (Seeded per unit: SMA, Pesantren, SMP, Diniyah)
   // ----------------------------------------------------
-  console.log('➡️ Seeding ALL 7 Achievements...');
+  console.log('➡️ Seeding Achievements for all 4 units...');
+  const unitPesantren = await prisma.educationUnit.findUnique({ where: { code: 'pesantren' } });
+  const unitSMP = await prisma.educationUnit.findUnique({ where: { code: 'smp' } });
+  const unitSMA = await prisma.educationUnit.findUnique({ where: { code: 'sma' } });
+  const unitDiniyah = await prisma.educationUnit.findUnique({ where: { code: 'diniyah' } });
+
   const achievementsData = [
-    { badge: 'Juara 1', category: 'Olimpiade Sains Nasional Bidang Kimia', title: 'Medali Emas Olimpiade Sains Nasional 2026', year: '2026', winner: 'Siswa SMA Cendekia Amanah', imageUrl: '/uploads/units/juara1.jpg', sortOrder: 1 },
-    { badge: 'Juara 1', category: 'MTQ Tingkat Provinsi Jawa Barat', title: 'Juara 1 Cabang Tilawah Remaja', year: '2026', winner: 'Santri Pesantren Cendekia Amanah', imageUrl: '/uploads/units/juara2.jpg', sortOrder: 2 },
-    { badge: 'Juara 2', category: 'Lomba Robotik Nasional Tingkat Madya', title: 'Inovasi Robotik Pemilah Sampah Otomatis', year: '2026', winner: 'Tim Robotik SMP Cendekia', imageUrl: '/uploads/units/juara3.jpg', sortOrder: 3 },
-    { badge: 'Juara 1', category: 'Lomba Pramuka Tingkat Nasional', title: 'Regu Terbaik Pionering & Navigasi', year: '2026', winner: 'Regu Pramuka SMA Cendekia', imageUrl: '/uploads/units/juara4.jpg', sortOrder: 4 },
-    { badge: 'Juara 3', category: 'National Robotic Championship', title: 'Line Follower Autonomous Microcontroller', year: '2026', winner: 'Siswa SMP Cendekia Amanah', imageUrl: '/uploads/units/juara5.jpeg', sortOrder: 5 },
-    { badge: 'Juara Harapan 1', category: 'Lomba Karya Tulis Ilmiah Islami (LKTI)', title: 'Riset Bioplastik Ramah Lingkungan', year: '2026', winner: 'Tim Riset SMA Cendekia', imageUrl: '/uploads/units/juara6.jpg', sortOrder: 6 },
-    { badge: 'Juara 2', category: 'Olimpiade Bahasa Arab Tingkat Nasional', title: 'Pidato & Debat Bahasa Arab Fushah', year: '2026', winner: 'Santri Pesantren Cendekia Amanah', imageUrl: '/uploads/units/juara7.jpeg', sortOrder: 7 }
+    // SMA
+    { badge: 'Juara 1', category: 'Olimpiade Sains Nasional Bidang Kimia', title: 'Medali Emas Olimpiade Sains Nasional 2026', year: '2026', winner: 'Siswa SMA Cendekia Amanah', imageUrl: '/uploads/units/juara1.jpg', unitId: unitSMA?.id ?? null, sortOrder: 1 },
+    { badge: 'Juara 1', category: 'Lomba Pramuka Tingkat Nasional', title: 'Regu Terbaik Pionering & Navigasi', year: '2026', winner: 'Regu Pramuka SMA Cendekia', imageUrl: '/uploads/units/juara4.jpg', unitId: unitSMA?.id ?? null, sortOrder: 2 },
+    { badge: 'Juara Harapan 1', category: 'Lomba Karya Tulis Ilmiah Islami (LKTI)', title: 'Riset Bioplastik Ramah Lingkungan', year: '2026', winner: 'Tim Riset SMA Cendekia', imageUrl: '/uploads/units/juara6.jpg', unitId: unitSMA?.id ?? null, sortOrder: 3 },
+    { badge: 'Juara 2', category: 'Kompetisi Inovasi STEAM & Coding Nasional', title: 'Aplikasi IoT Pertanian Cerdas Mandiri', year: '2025', winner: 'Tim STEAM SMA Cendekia', imageUrl: '/uploads/units/juara1.jpg', unitId: unitSMA?.id ?? null, sortOrder: 4 },
+
+    // Pesantren
+    { badge: 'Juara 1', category: 'MTQ Tingkat Provinsi Jawa Barat', title: 'Juara 1 Cabang Tilawah Remaja', year: '2026', winner: 'Santri Pesantren Cendekia Amanah', imageUrl: '/uploads/units/juara2.jpg', unitId: unitPesantren?.id ?? null, sortOrder: 5 },
+    { badge: 'Juara 2', category: 'Olimpiade Bahasa Arab Tingkat Nasional', title: 'Pidato & Debat Bahasa Arab Fushah', year: '2026', winner: 'Santri Pesantren Cendekia Amanah', imageUrl: '/uploads/units/juara7.jpeg', unitId: unitPesantren?.id ?? null, sortOrder: 6 },
+    { badge: 'Juara 1', category: 'Musabaqah Hifdzil Qur’an (MHQ) 30 Juz', title: 'Hafalan Al-Qur’an Mutqin Bersanad', year: '2025', winner: 'Santri Tahfidz Pesantren', imageUrl: '/uploads/units/juara2.jpg', unitId: unitPesantren?.id ?? null, sortOrder: 7 },
+    { badge: 'Juara 2', category: 'Musabaqah Qira’atil Kutub (MQK) Provinsi', title: 'Baca & Terjemah Kitab Fathul Qorib', year: '2025', winner: 'Santri Dirasah Islamiyah', imageUrl: '/uploads/units/juara7.jpeg', unitId: unitPesantren?.id ?? null, sortOrder: 8 },
+
+    // SMP
+    { badge: 'Juara 2', category: 'Lomba Robotik Nasional Tingkat Madya', title: 'Inovasi Robotik Pemilah Sampah Otomatis', year: '2026', winner: 'Tim Robotik SMP Cendekia', imageUrl: '/uploads/units/juara3.jpg', unitId: unitSMP?.id ?? null, sortOrder: 9 },
+    { badge: 'Juara 3', category: 'National Robotic Championship', title: 'Line Follower Autonomous Microcontroller', year: '2026', winner: 'Siswa SMP Cendekia Amanah', imageUrl: '/uploads/units/juara5.jpeg', unitId: unitSMP?.id ?? null, sortOrder: 10 },
+    { badge: 'Juara 1', category: 'Olimpiade Matematika & Sains Islam Terpadu', title: 'Medali Emas Bidang Matematika Tingkat Nasional', year: '2025', winner: 'Siswa SMP Cendekia', imageUrl: '/uploads/units/juara3.jpg', unitId: unitSMP?.id ?? null, sortOrder: 11 },
+    { badge: 'Juara 2', category: 'English Speech & Story Telling Contest', title: 'Lomba Pidato Bahasa Inggris se-Jabodetabek', year: '2025', winner: 'Siswa Bilingual SMP', imageUrl: '/uploads/units/juara5.jpeg', unitId: unitSMP?.id ?? null, sortOrder: 12 },
+
+    // Madrasah Diniyah
+    { badge: 'Juara 1', category: 'Lomba Tahfidz Juz ‘Amma & Tartil Al-Qur’an', title: 'Festival Santri Cilik Se-Kota Depok', year: '2026', winner: 'Santri Cilik Madrasah Diniyah', imageUrl: '/uploads/units/juara2.jpg', unitId: unitDiniyah?.id ?? null, sortOrder: 13 },
+    { badge: 'Juara 2', category: 'Pildacil & Da’i Cilik Islami Tingkat Kota', title: 'Pidato Dai Cilik Bertema Akhlak Mulia', year: '2026', winner: 'Santri Madrasah Diniyah', imageUrl: '/uploads/units/juara7.jpeg', unitId: unitDiniyah?.id ?? null, sortOrder: 14 },
+    { badge: 'Juara 1', category: 'Lomba Cerdas Cermat Diniyah Takmiliyah', title: 'Fiqih Ibadah & Sejarah Kebudayaan Islam', year: '2025', winner: 'Regu Cerdas Cermat Diniyah', imageUrl: '/uploads/units/juara4.jpg', unitId: unitDiniyah?.id ?? null, sortOrder: 15 },
+    { badge: 'Juara 3', category: 'Festival Seni Kaligrafi Islam Tingkat Dasar', title: 'Penulisan Khath Naskhi Santri Diniyah', year: '2025', winner: 'Santri Diniyah Cendekia', imageUrl: '/uploads/units/juara6.jpg', unitId: unitDiniyah?.id ?? null, sortOrder: 16 }
   ];
 
   await prisma.achievement.deleteMany({});
