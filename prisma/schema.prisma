@@ -430,6 +430,7 @@ model EducationUnit {
   programs       UnitProgram[]
   facilities     UnitFacility[]
   activities     UnitActivity[]
+  organizations  UnitOrganization[]
   achievements   Achievement[]
   agendas        Agenda[]
   testimonials   Testimonial[]
@@ -523,6 +524,30 @@ model UnitActivity {
 
   @@index([unitId, sortOrder])
   @@map("unit_activities")
+}
+
+model UnitOrganization {
+  id          String        @id @default(uuid()) @db.Uuid
+  unitId      String        @map("unit_id") @db.Uuid
+  name        String        @db.VarChar(150)
+  position    String        @db.VarChar(150)
+  category    String?       @default("Pimpinan") @db.VarChar(100)
+  level       Int           @default(1)
+  photoUrl    String?       @map("photo_url") @db.VarChar(500)
+  nip         String?       @db.VarChar(100)
+  education   String?       @db.VarChar(150)
+  bio         String?       @db.Text
+  sortOrder   Int           @default(0) @map("sort_order")
+  isActive    Boolean       @default(true) @map("is_active")
+
+  unit        EducationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([unitId, sortOrder])
+  @@index([unitId, category])
+  @@map("unit_organizations")
 }
 
 // ==================================================

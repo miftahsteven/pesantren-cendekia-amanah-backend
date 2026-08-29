@@ -740,4 +740,328 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
     await prisma.brochure.delete({ where: { id } });
     return { success: true, message: 'Brosur berhasil dihapus.' };
   });
+
+  // ==========================================
+  // 12. FASILITAS PESANTREN TERPADU
+  // ==========================================
+
+  // GET /api/v1/admin/facilities
+  fastify.get('/admin/facilities', async (req) => {
+    const { unitSlug, q } = req.query as { unitSlug?: string; q?: string };
+
+    const whereClause: any = {};
+    if (unitSlug && unitSlug !== 'ALL') {
+      whereClause.unit = { slug: unitSlug };
+    }
+    if (q && q.trim()) {
+      whereClause.OR = [
+        { name: { contains: q.trim(), mode: 'insensitive' } },
+        { description: { contains: q.trim(), mode: 'insensitive' } }
+      ];
+    }
+
+    const items = await prisma.unitFacility.findMany({
+      where: whereClause,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      },
+      orderBy: [
+        { sortOrder: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    });
+
+    const data = items.map((f) => ({
+      id: f.id,
+      name: f.name,
+      description: f.description,
+      imageUrl: f.imageUrl,
+      sortOrder: f.sortOrder,
+      isActive: f.isActive,
+      unitId: f.unitId,
+      unitName: f.unit?.name || 'Pesantren Cendekia Amanah',
+      unitShortName: f.unit?.shortName || 'Pesantren',
+      unitSlug: f.unit?.slug || 'pesantren',
+      unitBadge: f.unit?.badge || 'Kampus Terpadu',
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt
+    }));
+
+    return { success: true, data, total: data.length };
+  });
+
+  // POST /api/v1/admin/facilities
+  fastify.post('/admin/facilities', async (req) => {
+    const body = req.body as any;
+
+    let targetUnitId = body.unitId;
+    if (!targetUnitId) {
+      const defaultUnit = await prisma.educationUnit.findFirst({
+        where: { slug: 'pesantren' }
+      }) || await prisma.educationUnit.findFirst();
+      targetUnitId = defaultUnit?.id;
+    }
+
+    const item = await prisma.unitFacility.create({
+      data: {
+        name: body.name,
+        description: body.description || '',
+        imageUrl: body.imageUrl || '/uploads/gallery/pesantren1.png',
+        unitId: targetUnitId,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+      },
+      include: {
+        unit: true
+      }
+    });
+
+    return { success: true, message: 'Fasilitas berhasil ditambahkan.', data: item };
+  });
+
+  // GET /api/v1/admin/facilities/:id
+  fastify.get('/admin/facilities/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const item = await prisma.unitFacility.findUnique({
+      where: { id },
+      include: { unit: true }
+    });
+    if (!item) {
+      return { success: false, message: 'Fasilitas tidak ditemukan.' };
+    }
+    return { success: true, data: item };
+  });
+
+  // PUT /api/v1/admin/facilities/:id
+  fastify.put('/admin/facilities/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const dataToUpdate: any = {};
+    if (body.name !== undefined) dataToUpdate.name = body.name;
+    if (body.description !== undefined) dataToUpdate.description = body.description;
+    if (body.imageUrl !== undefined) dataToUpdate.imageUrl = body.imageUrl;
+    if (body.unitId !== undefined && body.unitId) dataToUpdate.unitId = body.unitId;
+    if (body.sortOrder !== undefined) dataToUpdate.sortOrder = Number(body.sortOrder);
+    if (body.isActive !== undefined) dataToUpdate.isActive = Boolean(body.isActive);
+
+    const item = await prisma.unitFacility.update({
+      where: { id },
+      data: dataToUpdate,
+      include: { unit: true }
+    });
+
+    return { success: true, message: 'Fasilitas berhasil diperbarui.', data: item };
+  });
+
+  // DELETE /api/v1/admin/facilities/:id
+  fastify.delete('/admin/facilities/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    await prisma.unitFacility.delete({ where: { id } });
+    return { success: true, message: 'Fasilitas berhasil dihapus.' };
+  });
+
+  // PATCH /api/v1/admin/facilities/:id/toggle
+  fastify.patch('/admin/facilities/:id/toggle', async (req) => {
+    const { id } = req.params as { id: string };
+    const current = await prisma.unitFacility.findUnique({ where: { id } });
+    if (!current) {
+      return { success: false, message: 'Fasilitas tidak ditemukan.' };
+    }
+    const item = await prisma.unitFacility.update({
+      where: { id },
+      data: { isActive: !current.isActive }
+    });
+    return { success: true, message: 'Status fasilitas berhasil diubah.', data: item };
+  });
+
+  // ==================================================
+  // UNIT ORGANIZATIONS (STRUKTUR ORGANISASI)
+  // ==================================================
+
+  // GET /api/v1/admin/organizations
+  fastify.get('/admin/organizations', async (req) => {
+    const { unitId, unitSlug, category, q } = req.query as {
+      unitId?: string;
+      unitSlug?: string;
+      category?: string;
+      q?: string;
+    };
+
+    const whereClause: any = {};
+    if (unitId && unitId !== 'ALL') {
+      whereClause.unitId = unitId;
+    } else if (unitSlug && unitSlug !== 'ALL') {
+      whereClause.unit = { slug: unitSlug };
+    }
+
+    if (category && category !== 'ALL') {
+      whereClause.category = category;
+    }
+
+    if (q && q.trim()) {
+      whereClause.OR = [
+        { name: { contains: q.trim(), mode: 'insensitive' } },
+        { position: { contains: q.trim(), mode: 'insensitive' } },
+        { education: { contains: q.trim(), mode: 'insensitive' } },
+        { nip: { contains: q.trim(), mode: 'insensitive' } }
+      ];
+    }
+
+    const items = await prisma.unitOrganization.findMany({
+      where: whereClause,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      },
+      orderBy: [
+        { level: 'asc' },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' }
+      ]
+    });
+
+    const data = items.map((m) => ({
+      id: m.id,
+      name: m.name,
+      position: m.position,
+      category: m.category,
+      level: m.level,
+      photoUrl: m.photoUrl || '/uploads/gallery/guru1.png',
+      nip: m.nip,
+      education: m.education,
+      bio: m.bio,
+      sortOrder: m.sortOrder,
+      isActive: m.isActive,
+      unitId: m.unitId,
+      unitName: m.unit?.name || 'Pesantren Cendekia Amanah',
+      unitShortName: m.unit?.shortName || 'Pesantren',
+      unitSlug: m.unit?.slug || 'pesantren',
+      unitBadge: m.unit?.badge || 'Pendidikan Terpadu',
+      createdAt: m.createdAt,
+      updatedAt: m.updatedAt
+    }));
+
+    return { success: true, data };
+  });
+
+  // POST /api/v1/admin/organizations
+  fastify.post('/admin/organizations', async (req) => {
+    const body = req.body as {
+      unitId: string;
+      name: string;
+      position: string;
+      category?: string;
+      level?: number;
+      photoUrl?: string;
+      nip?: string;
+      education?: string;
+      bio?: string;
+      sortOrder?: number;
+      isActive?: boolean;
+    };
+
+    if (!body.name || !body.position || !body.unitId) {
+      return { success: false, message: 'Nama, Jabatan, dan Unit Pendidikan wajib diisi.' };
+    }
+
+    const item = await prisma.unitOrganization.create({
+      data: {
+        unitId: body.unitId,
+        name: body.name,
+        position: body.position,
+        category: body.category || 'Pimpinan & Manajemen',
+        level: body.level ? Number(body.level) : 1,
+        photoUrl: body.photoUrl || '/uploads/gallery/guru1.png',
+        nip: body.nip || null,
+        education: body.education || null,
+        bio: body.bio || null,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+      },
+      include: {
+        unit: true
+      }
+    });
+
+    return { success: true, message: 'Anggota organisasi berhasil ditambahkan.', data: item };
+  });
+
+  // GET /api/v1/admin/organizations/:id
+  fastify.get('/admin/organizations/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const item = await prisma.unitOrganization.findUnique({
+      where: { id },
+      include: { unit: true }
+    });
+
+    if (!item) {
+      return { success: false, message: 'Data organisasi tidak ditemukan.' };
+    }
+
+    return { success: true, data: item };
+  });
+
+  // PUT /api/v1/admin/organizations/:id
+  fastify.put('/admin/organizations/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const dataToUpdate: any = {};
+    if (body.name !== undefined) dataToUpdate.name = body.name;
+    if (body.position !== undefined) dataToUpdate.position = body.position;
+    if (body.category !== undefined) dataToUpdate.category = body.category;
+    if (body.level !== undefined) dataToUpdate.level = Number(body.level);
+    if (body.photoUrl !== undefined) dataToUpdate.photoUrl = body.photoUrl;
+    if (body.nip !== undefined) dataToUpdate.nip = body.nip;
+    if (body.education !== undefined) dataToUpdate.education = body.education;
+    if (body.bio !== undefined) dataToUpdate.bio = body.bio;
+    if (body.unitId !== undefined && body.unitId) dataToUpdate.unitId = body.unitId;
+    if (body.sortOrder !== undefined) dataToUpdate.sortOrder = Number(body.sortOrder);
+    if (body.isActive !== undefined) dataToUpdate.isActive = Boolean(body.isActive);
+
+    const item = await prisma.unitOrganization.update({
+      where: { id },
+      data: dataToUpdate,
+      include: { unit: true }
+    });
+
+    return { success: true, message: 'Data struktur organisasi berhasil diperbarui.', data: item };
+  });
+
+  // DELETE /api/v1/admin/organizations/:id
+  fastify.delete('/admin/organizations/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    await prisma.unitOrganization.delete({ where: { id } });
+    return { success: true, message: 'Anggota struktur organisasi berhasil dihapus.' };
+  });
+
+  // PATCH /api/v1/admin/organizations/:id/toggle
+  fastify.patch('/admin/organizations/:id/toggle', async (req) => {
+    const { id } = req.params as { id: string };
+    const current = await prisma.unitOrganization.findUnique({ where: { id } });
+    if (!current) {
+      return { success: false, message: 'Data tidak ditemukan.' };
+    }
+    const item = await prisma.unitOrganization.update({
+      where: { id },
+      data: { isActive: !current.isActive }
+    });
+    return { success: true, message: 'Status aktif berhasil diubah.', data: item };
+  });
 }

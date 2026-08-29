@@ -8,6 +8,7 @@ import swaggerUi from '@fastify/swagger-ui';
 import staticFiles from '@fastify/static';
 import multipart from '@fastify/multipart';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { env } from './config/env.js';
@@ -19,6 +20,8 @@ import { AppError } from './common/errors/app-error.js';
 import { siteRoutes } from './modules/site/site.route.js';
 import { navigationRoutes } from './modules/navigation/navigation.route.js';
 import { educationUnitRoutes } from './modules/education-unit/education-unit.route.js';
+import { facilityRoutes } from './modules/facility/facility.route.js';
+import { organizationRoutes } from './modules/organization/organization.route.js';
 import { newsRoutes } from './modules/news/news.route.js';
 import { opinionRoutes } from './modules/opinion/opinion.route.js';
 import { agendaRoutes } from './modules/agenda/agenda.route.js';
@@ -194,6 +197,8 @@ export async function buildApp(): Promise<FastifyInstance> {
       await apiRouter.register(siteRoutes);
       await apiRouter.register(navigationRoutes);
       await apiRouter.register(educationUnitRoutes);
+      await apiRouter.register(facilityRoutes);
+      await apiRouter.register(organizationRoutes);
       await apiRouter.register(newsRoutes);
       await apiRouter.register(opinionRoutes);
       await apiRouter.register(agendaRoutes);
@@ -220,6 +225,21 @@ export async function buildApp(): Promise<FastifyInstance> {
     },
     { prefix: env.API_PREFIX }
   );
+
+  // Fallback for missing uploads images to avoid broken UI
+  app.setNotFoundHandler((req, reply) => {
+    if (req.url.startsWith('/uploads/')) {
+      const fallbackFile = path.resolve(process.cwd(), 'storage/uploads/gallery/pesantren1.png');
+      if (fs.existsSync(fallbackFile)) {
+        return reply.type('image/png').send(fs.createReadStream(fallbackFile));
+      }
+    }
+    reply.status(404).send({
+      message: `Route ${req.method}:${req.url} not found`,
+      error: 'Not Found',
+      statusCode: 404
+    });
+  });
 
   return app;
 }
