@@ -120,7 +120,7 @@ async function main() {
     serviceHours: 'Senin – Sabtu, 07.30 – 15.30 WIB',
     websiteUrl: 'https://cendekiaamanah.sch.id',
     consultationUrl: 'https://cholilnafis.id/#konsultasi',
-    virtualTourUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    virtualTourUrl: 'https://www.youtube.com/watch?v=iv-QsaLtvb8',
     seoTitle: 'Pesantren Cendekia Amanah — Lembaga Pendidikan Terpadu',
     seoDescription: 'Lembaga Pendidikan Terpadu dengan unit Pesantren, SMP, SMA, dan Madrasah Diniyah di Depok.',
     logoUrl: '/logo/main-logo.png',

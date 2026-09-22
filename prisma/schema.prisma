@@ -272,7 +272,7 @@ model SiteSetting {
 
   websiteUrl      String   @default("https://cendekiaamanah.sch.id") @map("website_url") @db.VarChar(255)
   consultationUrl String   @default("https://cholilnafis.id/#konsultasi") @map("consultation_url") @db.VarChar(255)
-  virtualTourUrl  String   @default("https://www.youtube.com/watch?v=dQw4w9WgXcQ") @map("virtual_tour_url") @db.VarChar(255)
+  virtualTourUrl  String   @default("https://www.youtube.com/watch?v=iv-QsaLtvb8") @map("virtual_tour_url") @db.VarChar(255)
 
   seoTitle        String?  @map("seo_title") @db.VarChar(255)
   seoDescription  String?  @map("seo_description") @db.VarChar(500)
