@@ -158,4 +158,191 @@ export async function adminSiteRoutes(fastify: FastifyInstance) {
       data: socials
     };
   });
+
+  // PUT /api/v1/admin/site/socials/:id
+  fastify.put('/admin/site/socials/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const updated = await prisma.socialLink.update({
+      where: { id },
+      data: {
+        name: body.name,
+        url: body.url,
+        handle: body.handle,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : undefined,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'UPDATE_SOCIAL_LINK',
+      entityType: 'SocialLink',
+      entityId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Media sosial berhasil diperbarui.',
+      data: updated
+    };
+  });
+
+  // POST /api/v1/admin/site/socials
+  fastify.post('/admin/site/socials', async (req) => {
+    const body = req.body as any;
+
+    const created = await prisma.socialLink.create({
+      data: {
+        platform: body.platform || 'OTHER',
+        name: body.name || 'Media Sosial',
+        url: body.url || '',
+        handle: body.handle || '',
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'CREATE_SOCIAL_LINK',
+      entityType: 'SocialLink',
+      entityId: created.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Media sosial berhasil ditambahkan.',
+      data: created
+    };
+  });
+
+  // DELETE /api/v1/admin/site/socials/:id
+  fastify.delete('/admin/site/socials/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    await prisma.socialLink.delete({ where: { id } });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'DELETE_SOCIAL_LINK',
+      entityType: 'SocialLink',
+      entityId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Media sosial berhasil dihapus.'
+    };
+  });
+
+  // ==========================================
+  // SITE STATISTICS
+  // ==========================================
+
+  // GET /api/v1/admin/site/statistics
+  fastify.get('/admin/site/statistics', async (req) => {
+    const { section } = req.query as { section?: string };
+    const where: any = {};
+    if (section) where.sectionCode = section;
+
+    const stats = await prisma.siteStatistic.findMany({
+      where,
+      orderBy: [{ sectionCode: 'asc' }, { sortOrder: 'asc' }]
+    });
+
+    return {
+      success: true,
+      data: stats
+    };
+  });
+
+  // PUT /api/v1/admin/site/statistics/:id
+  fastify.put('/admin/site/statistics/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const updated = await prisma.siteStatistic.update({
+      where: { id },
+      data: {
+        label: body.label,
+        value: body.value,
+        icon: body.icon,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : undefined
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'UPDATE_STATISTIC',
+      entityType: 'SiteStatistic',
+      entityId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Statistik berhasil diperbarui.',
+      data: updated
+    };
+  });
+
+  // POST /api/v1/admin/site/statistics
+  fastify.post('/admin/site/statistics', async (req) => {
+    const body = req.body as any;
+
+    const created = await prisma.siteStatistic.create({
+      data: {
+        sectionCode: body.sectionCode || 'HOME_HERO',
+        label: body.label || '',
+        value: body.value || '',
+        icon: body.icon || 'Users',
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'CREATE_STATISTIC',
+      entityType: 'SiteStatistic',
+      entityId: created.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Statistik berhasil ditambahkan.',
+      data: created
+    };
+  });
+
+  // DELETE /api/v1/admin/site/statistics/:id
+  fastify.delete('/admin/site/statistics/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    await prisma.siteStatistic.delete({ where: { id } });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'DELETE_STATISTIC',
+      entityType: 'SiteStatistic',
+      entityId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Statistik berhasil dihapus.'
+    };
+  });
 }
