@@ -985,7 +985,7 @@ model HomeCtaBanner {
   description       String   @db.Text
   features          Json     @default("[]")
   primaryCtaText    String   @default("DAFTAR SEKARANG") @map("primary_cta_text") @db.VarChar(100)
-  primaryCtaUrl     String   @default("/ppdb") @map("primary_cta_url") @db.VarChar(255)
+  primaryCtaUrl     String   @default("/ppdb") @map("primary_cta_url") @db.VarChar(500)
   secondaryCtaText  String   @default("Alur & Panduan Pendaftaran") @map("secondary_cta_text") @db.VarChar(100)
   secondaryCtaUrl   String   @default("/kontak") @map("secondary_cta_url") @db.VarChar(255)
   imageUrl          String   @default("/images/galery/sma8.png") @map("image_url") @db.VarChar(500)
