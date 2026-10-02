@@ -76,4 +76,17 @@ export async function siteRoutes(fastify: FastifyInstance) {
       data: programs
     };
   });
+
+  // GET /api/v1/site/ppdb-banner
+  fastify.get('/site/ppdb-banner', async () => {
+    const banner = await prisma.homeCtaBanner.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return {
+      success: true,
+      data: banner
+    };
+  });
 }

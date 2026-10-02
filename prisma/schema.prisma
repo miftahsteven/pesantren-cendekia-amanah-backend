@@ -917,3 +917,26 @@ model NewsletterSubscription {
   @@index([status, createdAt])
   @@map("newsletter_subscriptions")
 }
+
+model HomeCtaBanner {
+  id                String   @id @default(uuid()) @db.Uuid
+  badge             String   @default("Kuota Terbatas — Gelombang II") @db.VarChar(150)
+  title             String   @default("PENERIMAAN PESERTA DIDIK BARU") @db.VarChar(255)
+  academicYear      String   @default("Tahun Ajaran 2027/2028 (Pesantren, SMP, SMA, Diniyah)") @map("academic_year") @db.VarChar(255)
+  description       String   @db.Text
+  features          Json     @default("[]")
+  primaryCtaText    String   @default("DAFTAR SEKARANG") @map("primary_cta_text") @db.VarChar(100)
+  primaryCtaUrl     String   @default("/ppdb") @map("primary_cta_url") @db.VarChar(255)
+  secondaryCtaText  String   @default("Alur & Panduan Pendaftaran") @map("secondary_cta_text") @db.VarChar(100)
+  secondaryCtaUrl   String   @default("/kontak") @map("secondary_cta_url") @db.VarChar(255)
+  imageUrl          String   @default("/images/galery/sma8.png") @map("image_url") @db.VarChar(500)
+  captionTitle      String   @default("Cendekia Amanah") @map("caption_title") @db.VarChar(150)
+  captionSubtitle   String   @default("Generasi Qurani & Berprestasi") @map("caption_subtitle") @db.VarChar(150)
+  isActive          Boolean  @default(true) @map("is_active")
+
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("home_cta_banners")
+}
+

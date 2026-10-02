@@ -345,4 +345,91 @@ export async function adminSiteRoutes(fastify: FastifyInstance) {
       message: 'Statistik berhasil dihapus.'
     };
   });
+
+  // GET /api/v1/admin/site/ppdb-banner
+  fastify.get('/admin/site/ppdb-banner', async () => {
+    let banner = await prisma.homeCtaBanner.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!banner) {
+      banner = await prisma.homeCtaBanner.create({
+        data: {
+          badge: 'Kuota Terbatas — Gelombang II',
+          title: 'PENERIMAAN PESERTA DIDIK BARU',
+          academicYear: 'Tahun Ajaran 2027/2028 (Pesantren, SMP, SMA, Diniyah)',
+          description: 'Bergabunglah bersama keluarga besar Pesantren Cendekia Amanah. Dapatkan bimbingan tahfidz bersanad, kurikulum terpadu nasional, serta pembinaan kepemimpinan islami sejak dini.',
+          features: [
+            'Sistem Pendaftaran Online 3 Langkah',
+            'Tersedia Beasiswa Tahfidz & Prestasi',
+            'Pilihan Program Boarding / Fullday',
+            'Konfirmasi Cepat via WhatsApp 24 Jam'
+          ],
+          primaryCtaText: 'DAFTAR SEKARANG',
+          primaryCtaUrl: '/ppdb',
+          secondaryCtaText: 'Alur & Panduan Pendaftaran',
+          secondaryCtaUrl: '/kontak',
+          imageUrl: '/images/galery/sma8.png',
+          captionTitle: 'Cendekia Amanah',
+          captionSubtitle: 'Generasi Qurani & Berprestasi',
+          isActive: true
+        }
+      });
+    }
+
+    return {
+      success: true,
+      data: banner
+    };
+  });
+
+  // PUT /api/v1/admin/site/ppdb-banner
+  fastify.put('/admin/site/ppdb-banner', async (req) => {
+    const body = req.body as any;
+    let banner = await prisma.homeCtaBanner.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const updateData = {
+      badge: body.badge ?? 'Kuota Terbatas — Gelombang II',
+      title: body.title ?? 'PENERIMAAN PESERTA DIDIK BARU',
+      academicYear: body.academicYear ?? 'Tahun Ajaran 2027/2028 (Pesantren, SMP, SMA, Diniyah)',
+      description: body.description ?? '',
+      features: Array.isArray(body.features) ? body.features : [],
+      primaryCtaText: body.primaryCtaText ?? 'DAFTAR SEKARANG',
+      primaryCtaUrl: body.primaryCtaUrl ?? '/ppdb',
+      secondaryCtaText: body.secondaryCtaText ?? 'Alur & Panduan Pendaftaran',
+      secondaryCtaUrl: body.secondaryCtaUrl ?? '/kontak',
+      imageUrl: body.imageUrl ?? '/images/galery/sma8.png',
+      captionTitle: body.captionTitle ?? 'Cendekia Amanah',
+      captionSubtitle: body.captionSubtitle ?? 'Generasi Qurani & Berprestasi',
+      isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+    };
+
+    if (banner) {
+      banner = await prisma.homeCtaBanner.update({
+        where: { id: banner.id },
+        data: updateData
+      });
+    } else {
+      banner = await prisma.homeCtaBanner.create({
+        data: updateData
+      });
+    }
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'UPDATE_HOME_CTA_BANNER',
+      entityType: 'HomeCtaBanner',
+      entityId: banner.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return {
+      success: true,
+      message: 'Banner PPDB beranda berhasil diperbarui.',
+      data: banner
+    };
+  });
 }
