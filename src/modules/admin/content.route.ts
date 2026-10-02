@@ -364,6 +364,150 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
   // 4. PROGRAM UNGGULAN
   // ==========================================
 
+  // GET /api/v1/admin/unit-programs
+  fastify.get('/admin/unit-programs', async (req) => {
+    const { unitId } = req.query as { unitId?: string };
+    const where: any = {};
+    if (unitId && unitId !== 'all') {
+      where.unitId = unitId;
+    }
+
+    const items = await prisma.unitProgram.findMany({
+      where,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      },
+      orderBy: [
+        { unit: { sortOrder: 'asc' } },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' }
+      ]
+    });
+    return { success: true, data: items };
+  });
+
+  // POST /api/v1/admin/unit-programs
+  fastify.post('/admin/unit-programs', async (req) => {
+    const body = req.body as any;
+    if (!body.unitId) {
+      throw new ValidationError('Unit pendidikan wajib dipilih.');
+    }
+    if (!body.title) {
+      throw new ValidationError('Judul program wajib diisi.');
+    }
+
+    const prog = await prisma.unitProgram.create({
+      data: {
+        unitId: body.unitId,
+        title: body.title,
+        description: body.description || body.desc || '',
+        badge: body.badge || null,
+        icon: body.icon || body.iconName || 'BookOpen',
+        imageUrl: body.imageUrl || null,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+      },
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'CREATE_UNIT_PROGRAM',
+      entityType: 'UnitProgram',
+      entityId: prog.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      metadata: { title: prog.title, unitId: prog.unitId }
+    });
+
+    return { success: true, message: 'Program unggulan unit berhasil ditambahkan.', data: prog };
+  });
+
+  // PUT /api/v1/admin/unit-programs/:id
+  fastify.put('/admin/unit-programs/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const prog = await prisma.unitProgram.update({
+      where: { id },
+      data: {
+        unitId: body.unitId !== undefined ? body.unitId : undefined,
+        title: body.title !== undefined ? body.title : undefined,
+        description: body.description !== undefined ? body.description : (body.desc !== undefined ? body.desc : undefined),
+        badge: body.badge !== undefined ? body.badge : undefined,
+        icon: body.icon !== undefined ? body.icon : (body.iconName !== undefined ? body.iconName : undefined),
+        imageUrl: body.imageUrl !== undefined ? body.imageUrl : undefined,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : undefined
+      },
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'UPDATE_UNIT_PROGRAM',
+      entityType: 'UnitProgram',
+      entityId: prog.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      metadata: { title: prog.title, unitId: prog.unitId }
+    });
+
+    return { success: true, message: 'Program unggulan unit berhasil diperbarui.', data: prog };
+  });
+
+  // DELETE /api/v1/admin/unit-programs/:id
+  fastify.delete('/admin/unit-programs/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const prog = await prisma.unitProgram.findUnique({ where: { id } });
+    await prisma.unitProgram.delete({ where: { id } });
+
+    if (prog) {
+      await recordAuditLog({
+        actorAdminId: req.adminUser?.id,
+        action: 'DELETE_UNIT_PROGRAM',
+        entityType: 'UnitProgram',
+        entityId: id,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        metadata: { title: prog.title, unitId: prog.unitId }
+      });
+    }
+
+    return { success: true, message: 'Program unggulan unit berhasil dihapus.' };
+  });
+
   // GET /api/v1/admin/featured-programs
   fastify.get('/admin/featured-programs', async () => {
     const items = await prisma.featuredProgram.findMany({
