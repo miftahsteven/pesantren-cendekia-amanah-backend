@@ -11,6 +11,7 @@ export async function educationUnitRoutes(fastify: FastifyInstance) {
       include: {
         features: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         programs: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+        curriculums: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         facilities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         activities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         achievements: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } }
@@ -32,6 +33,7 @@ export async function educationUnitRoutes(fastify: FastifyInstance) {
       include: {
         features: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         programs: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
+        curriculums: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         facilities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         activities: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
         achievements: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
@@ -47,6 +49,30 @@ export async function educationUnitRoutes(fastify: FastifyInstance) {
     return {
       success: true,
       data: unit
+    };
+  });
+
+  // GET /api/v1/units/:slug/curriculums
+  fastify.get('/units/:slug/curriculums', async (req) => {
+    const { slug } = req.params as { slug: string };
+    const unit = await prisma.educationUnit.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true }
+    });
+
+    if (!unit) {
+      throw new NotFoundError(`Unit pendidikan dengan slug '${slug}' tidak ditemukan.`);
+    }
+
+    const items = await prisma.unitCurriculum.findMany({
+      where: { unitId: unit.id, isActive: true },
+      orderBy: { sortOrder: 'asc' }
+    });
+
+    return {
+      success: true,
+      data: items,
+      unit
     };
   });
 }

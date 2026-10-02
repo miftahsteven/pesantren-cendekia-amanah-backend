@@ -434,6 +434,7 @@ model EducationUnit {
 
   features       UnitFeature[]
   programs       UnitProgram[]
+  curriculums    UnitCurriculum[]
   facilities     UnitFacility[]
   activities     UnitActivity[]
   organizations  UnitOrganization[]
@@ -494,6 +495,27 @@ model UnitProgram {
 
   @@index([unitId, sortOrder])
   @@map("unit_programs")
+}
+
+model UnitCurriculum {
+  id          String        @id @default(uuid()) @db.Uuid
+  unitId      String        @map("unit_id") @db.Uuid
+  title       String        @db.VarChar(200)
+  badge       String?       @db.VarChar(100)
+  icon        String?       @db.VarChar(50)
+  color       String?       @default("blue") @db.VarChar(50)
+  description String        @db.Text
+  highlights  String[]      @default([]) @map("highlights")
+  sortOrder   Int           @default(0) @map("sort_order")
+  isActive    Boolean       @default(true) @map("is_active")
+
+  unit        EducationUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([unitId, sortOrder])
+  @@map("unit_curriculums")
 }
 
 model UnitFacility {

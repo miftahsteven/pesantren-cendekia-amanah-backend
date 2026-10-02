@@ -1230,4 +1230,223 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
     });
     return { success: true, message: 'Status aktif berhasil diubah.', data: item };
   });
+
+  // ==========================================
+  // 12. KURIKULUM UNIT (UNIT CURRICULUM)
+  // ==========================================
+
+  // GET /api/v1/admin/curriculums
+  fastify.get('/admin/curriculums', async (req) => {
+    const { unitId, search } = req.query as { unitId?: string; search?: string };
+    const where: any = {};
+    if (unitId && unitId !== 'all') {
+      where.unitId = unitId;
+    }
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { badge: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const items = await prisma.unitCurriculum.findMany({
+      where,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      },
+      orderBy: [
+        { unit: { sortOrder: 'asc' } },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' }
+      ]
+    });
+    return { success: true, data: items };
+  });
+
+  // GET /api/v1/admin/curriculums/:id
+  fastify.get('/admin/curriculums/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const item = await prisma.unitCurriculum.findUnique({
+      where: { id },
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      }
+    });
+
+    if (!item) {
+      throw new NotFoundError('Data kurikulum tidak ditemukan.');
+    }
+
+    return { success: true, data: item };
+  });
+
+  // POST /api/v1/admin/curriculums
+  fastify.post('/admin/curriculums', async (req) => {
+    const body = req.body as any;
+    if (!body.unitId) {
+      throw new ValidationError('Unit pendidikan wajib dipilih.');
+    }
+    if (!body.title) {
+      throw new ValidationError('Judul kurikulum wajib diisi.');
+    }
+
+    let parsedHighlights: string[] = [];
+    if (Array.isArray(body.highlights)) {
+      parsedHighlights = body.highlights.map((h: any) => String(h).trim()).filter(Boolean);
+    } else if (typeof body.highlights === 'string') {
+      parsedHighlights = body.highlights.split('\n').map((h: string) => h.trim()).filter(Boolean);
+    }
+
+    const item = await prisma.unitCurriculum.create({
+      data: {
+        unitId: body.unitId,
+        title: body.title,
+        badge: body.badge || null,
+        icon: body.icon || 'BookOpen',
+        color: body.color || 'blue',
+        description: body.description || '',
+        highlights: parsedHighlights,
+        sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
+        isActive: body.isActive !== undefined ? Boolean(body.isActive) : true
+      },
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'CREATE_UNIT_CURRICULUM',
+      entityType: 'UnitCurriculum',
+      entityId: item.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      metadata: { title: item.title, unitId: item.unitId }
+    });
+
+    return { success: true, message: 'Kurikulum berhasil ditambahkan.', data: item };
+  });
+
+  // PUT /api/v1/admin/curriculums/:id
+  fastify.put('/admin/curriculums/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const body = req.body as any;
+
+    const existing = await prisma.unitCurriculum.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Data kurikulum tidak ditemukan.');
+    }
+
+    const dataToUpdate: any = {};
+    if (body.unitId !== undefined && body.unitId) dataToUpdate.unitId = body.unitId;
+    if (body.title !== undefined) dataToUpdate.title = body.title;
+    if (body.badge !== undefined) dataToUpdate.badge = body.badge;
+    if (body.icon !== undefined) dataToUpdate.icon = body.icon;
+    if (body.color !== undefined) dataToUpdate.color = body.color;
+    if (body.description !== undefined) dataToUpdate.description = body.description;
+    if (body.sortOrder !== undefined) dataToUpdate.sortOrder = Number(body.sortOrder);
+    if (body.isActive !== undefined) dataToUpdate.isActive = Boolean(body.isActive);
+
+    if (body.highlights !== undefined) {
+      if (Array.isArray(body.highlights)) {
+        dataToUpdate.highlights = body.highlights.map((h: any) => String(h).trim()).filter(Boolean);
+      } else if (typeof body.highlights === 'string') {
+        dataToUpdate.highlights = body.highlights.split('\n').map((h: string) => h.trim()).filter(Boolean);
+      }
+    }
+
+    const item = await prisma.unitCurriculum.update({
+      where: { id },
+      data: dataToUpdate,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      }
+    });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'UPDATE_UNIT_CURRICULUM',
+      entityType: 'UnitCurriculum',
+      entityId: item.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      metadata: { title: item.title, unitId: item.unitId }
+    });
+
+    return { success: true, message: 'Kurikulum berhasil diperbarui.', data: item };
+  });
+
+  // DELETE /api/v1/admin/curriculums/:id
+  fastify.delete('/admin/curriculums/:id', async (req) => {
+    const { id } = req.params as { id: string };
+    const existing = await prisma.unitCurriculum.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundError('Data kurikulum tidak ditemukan.');
+    }
+
+    await prisma.unitCurriculum.delete({ where: { id } });
+
+    await recordAuditLog({
+      actorAdminId: req.adminUser?.id,
+      action: 'DELETE_UNIT_CURRICULUM',
+      entityType: 'UnitCurriculum',
+      entityId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      metadata: { title: existing.title, unitId: existing.unitId }
+    });
+
+    return { success: true, message: 'Kurikulum berhasil dihapus.' };
+  });
+
+  // PATCH /api/v1/admin/curriculums/:id/toggle
+  fastify.patch('/admin/curriculums/:id/toggle', async (req) => {
+    const { id } = req.params as { id: string };
+    const current = await prisma.unitCurriculum.findUnique({ where: { id } });
+    if (!current) {
+      return { success: false, message: 'Data tidak ditemukan.' };
+    }
+    const item = await prisma.unitCurriculum.update({
+      where: { id },
+      data: { isActive: !current.isActive }
+    });
+    return { success: true, message: 'Status aktif berhasil diubah.', data: item };
+  });
 }
