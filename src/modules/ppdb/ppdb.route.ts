@@ -107,4 +107,17 @@ export async function ppdbRoutes(fastify: FastifyInstance) {
       }
     };
   });
+
+  // GET /api/v1/ppdb/links
+  fastify.get('/ppdb/links', async () => {
+    const links = await prisma.ppdbLink.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' }
+    });
+
+    return {
+      success: true,
+      data: links
+    };
+  });
 }

@@ -927,6 +927,24 @@ model PpdbStatusHistory {
   @@map("ppdb_status_histories")
 }
 
+model PpdbLink {
+  id           String   @id @default(uuid()) @db.Uuid
+  unitCode     String   @unique @map("unit_code") @db.VarChar(50)
+  unitName     String   @map("unit_name") @db.VarChar(150)
+  title        String   @db.VarChar(200)
+  description  String?  @db.Text
+  formUrl      String   @map("form_url") @db.VarChar(500)
+  academicYear String   @default("2027/2028") @map("academic_year") @db.VarChar(50)
+  badge        String?  @db.VarChar(100)
+  isActive     Boolean  @default(true) @map("is_active")
+  sortOrder    Int      @default(0) @map("sort_order")
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("ppdb_links")
+}
+
 model ContactMessage {
   id        String        @id @default(uuid()) @db.Uuid
   name      String        @db.VarChar(150)
