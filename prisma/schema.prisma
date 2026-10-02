@@ -257,6 +257,16 @@ model SiteSetting {
   leaderPhotoUrl  String   @default("/images/guru/leader.png") @map("leader_photo_url") @db.VarChar(500)
   leaderQuotes    String[] @default([]) @map("leader_quotes")
 
+  foundationChairName       String?  @default("Dr. H. Agus Suprayogi, ST., M.Si") @map("foundation_chair_name") @db.VarChar(150)
+  foundationChairRole       String?  @default("Ketua Yayasan") @map("foundation_chair_role") @db.VarChar(150)
+  foundationChairTitle      String?  @default("Ketua Yayasan Cendekia Amanah") @map("foundation_chair_title") @db.VarChar(255)
+  foundationChairPhotoUrl   String?  @default("/uploads/guru/dr-agus-suprayogi.jpg") @map("foundation_chair_photo_url") @db.VarChar(500)
+
+  foundationQualityName     String?  @default("K.H. Zaiyadi, M.Pd") @map("foundation_quality_name") @db.VarChar(150)
+  foundationQualityRole     String?  @default("Penjamin Mutu Pendidikan") @map("foundation_quality_role") @db.VarChar(150)
+  foundationQualityTitle    String?  @default("Penjamin Mutu Pendidikan Cendekia Amanah") @map("foundation_quality_title") @db.VarChar(255)
+  foundationQualityPhotoUrl String?  @default("/uploads/guru/kh-zaiyadi.jpg") @map("foundation_quality_photo_url") @db.VarChar(500)
+
   phone           String   @map("phone") @db.VarChar(50)
   whatsapp        String   @map("whatsapp") @db.VarChar(50)
   email           String   @map("email") @db.VarChar(100)
