@@ -75,4 +75,46 @@ export async function educationUnitRoutes(fastify: FastifyInstance) {
       unit
     };
   });
+
+  // GET /api/v1/curriculums
+  fastify.get('/curriculums', async (req) => {
+    const { unitSlug } = req.query as { unitSlug?: string };
+    const where: any = { isActive: true };
+
+    if (unitSlug && unitSlug.toLowerCase() !== 'all') {
+      const normalizedSlug = unitSlug.toLowerCase() === 'mdta' ? 'diniyah' : unitSlug.toLowerCase();
+      where.unit = {
+        OR: [
+          { slug: normalizedSlug },
+          { code: normalizedSlug }
+        ]
+      };
+    }
+
+    const items = await prisma.unitCurriculum.findMany({
+      where,
+      include: {
+        unit: {
+          select: {
+            id: true,
+            code: true,
+            slug: true,
+            name: true,
+            shortName: true,
+            badge: true
+          }
+        }
+      },
+      orderBy: [
+        { unit: { sortOrder: 'asc' } },
+        { sortOrder: 'asc' },
+        { createdAt: 'asc' }
+      ]
+    });
+
+    return {
+      success: true,
+      data: items
+    };
+  });
 }
