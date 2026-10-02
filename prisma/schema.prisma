@@ -426,6 +426,12 @@ model EducationUnit {
   curriculumTitle String?          @map("curriculum_title") @db.VarChar(255)
   curriculumBody String[]          @default([]) @map("curriculum_body")
 
+  welcomeName    String?           @map("welcome_name") @db.VarChar(150)
+  welcomeRole    String?           @map("welcome_role") @db.VarChar(150)
+  welcomePhoto   String?           @map("welcome_photo") @db.VarChar(500)
+  welcomeQuote   String?           @map("welcome_quote") @db.VarChar(255)
+  welcomeMessage String?           @map("welcome_message") @db.Text
+
   features       UnitFeature[]
   programs       UnitProgram[]
   facilities     UnitFacility[]
@@ -690,6 +696,8 @@ model Agenda {
   year        String         @default("2026") @db.VarChar(10)
   time        String         @db.VarChar(100)
   location    String?        @db.VarChar(255)
+  eventDate   String?        @map("event_date") @db.VarChar(50)
+  category    String?        @default("Akademik") @db.VarChar(100)
   status      String?        @db.VarChar(50)
   isFeatured  Boolean        @default(false) @map("is_featured")
   isActive    Boolean        @default(true) @map("is_active")

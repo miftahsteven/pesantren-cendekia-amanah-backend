@@ -348,7 +348,12 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
         heroTitle: body.heroTitle,
         heroSubtitle: body.heroSubtitle,
         profileBody: body.profileBody,
-        curriculumBody: body.curriculumBody
+        curriculumBody: body.curriculumBody,
+        welcomeName: body.welcomeName !== undefined ? body.welcomeName : undefined,
+        welcomeRole: body.welcomeRole !== undefined ? body.welcomeRole : undefined,
+        welcomePhoto: body.welcomePhoto !== undefined ? body.welcomePhoto : undefined,
+        welcomeQuote: body.welcomeQuote !== undefined ? body.welcomeQuote : undefined,
+        welcomeMessage: body.welcomeMessage !== undefined ? body.welcomeMessage : undefined
       }
     });
 
@@ -410,9 +415,19 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
   // ==========================================
 
   // GET /api/v1/admin/agendas
-  fastify.get('/admin/agendas', async () => {
+  fastify.get('/admin/agendas', async (req) => {
+    const { unitId } = req.query as { unitId?: string };
+    const where: any = {};
+    if (unitId && unitId !== 'all') {
+      where.unitId = unitId;
+    }
+
     const items = await prisma.agenda.findMany({
-      orderBy: { createdAt: 'desc' },
+      where,
+      orderBy: [
+        { eventDate: 'asc' },
+        { createdAt: 'desc' }
+      ],
       include: { unit: true }
     });
     return { success: true, data: items };
@@ -433,8 +448,11 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
         status: body.status || 'Mendatang',
         isFeatured: Boolean(body.isFeatured),
         isActive: true,
-        unitId: body.unitId || null
-      }
+        unitId: body.unitId || null,
+        eventDate: body.eventDate || null,
+        category: body.category || 'Akademik'
+      },
+      include: { unit: true }
     });
     return { success: true, message: 'Agenda berhasil ditambahkan.', data: agenda };
   });
@@ -454,8 +472,12 @@ export async function adminContentRoutes(fastify: FastifyInstance) {
         time: body.time,
         location: body.location,
         status: body.status,
-        isFeatured: Boolean(body.isFeatured)
-      }
+        isFeatured: Boolean(body.isFeatured),
+        unitId: body.unitId !== undefined ? (body.unitId || null) : undefined,
+        eventDate: body.eventDate !== undefined ? (body.eventDate || null) : undefined,
+        category: body.category !== undefined ? body.category : undefined
+      },
+      include: { unit: true }
     });
     return { success: true, message: 'Agenda berhasil diperbarui.', data: agenda };
   });

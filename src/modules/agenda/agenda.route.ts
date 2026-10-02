@@ -9,12 +9,18 @@ export async function agendaRoutes(fastify: FastifyInstance) {
     const where: any = { isActive: true };
 
     if (unit) {
-      where.unit = { code: unit };
+      where.OR = [
+        { unit: { code: { equals: unit, mode: 'insensitive' } } },
+        { unit: { slug: { equals: unit, mode: 'insensitive' } } }
+      ];
     }
 
     const agendas = await prisma.agenda.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { eventDate: 'asc' },
+        { createdAt: 'desc' }
+      ],
       include: { unit: true }
     });
 
